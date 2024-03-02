@@ -45,7 +45,21 @@ We also have to create a new subscription
 
 ## 3. Load project dependencies
 
+We run this command to add the Azure Service Bus library
+
+```
+dotnet add package Azure.Messaging.ServiceBus
+```
+
+We also have to add the Swagger and OpenAPI libraries to access the API Docs
+
+This is the csproj file including the project dependencies
+
+![image](https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer/assets/32194879/2990d2e5-48bb-4239-b708-5b934664d5a5)
+
 ## 4. Create the project structure
+
+
 
 ## 5. Create the Controller
 
