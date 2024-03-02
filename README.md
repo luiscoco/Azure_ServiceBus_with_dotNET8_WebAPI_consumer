@@ -40,7 +40,6 @@ We also have to create a new subscription
 
 ![image](https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer/assets/32194879/6eabacda-7346-4ced-b66c-6fcb8c5815c7)
 
-
 ## 2. Create a .NET8 WebAPI with VSCode
 
 ## 3. Load project dependencies
@@ -59,10 +58,141 @@ This is the csproj file including the project dependencies
 
 ## 4. Create the project structure
 
-
+![image](https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer/assets/32194879/475d1f86-cdb2-46c9-98c1-a16e31923f60)
 
 ## 5. Create the Controller
 
+```csharp
+using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Azure.Messaging.ServiceBus;
+using Microsoft.AspNetCore.Mvc;
+
+namespace ServiceBusReceiverApi.Controllers
+{
+    public class MessageDto
+    {
+        public string? Body { get; set; }
+        public string? Priority { get; set; }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class ServiceBusController : ControllerBase
+    {
+        private static string connectionString = "Endpoint=sb://myservicebus1974.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=c/7ve5kw9QuPqM8YSUWQvNTrjM+y5hkmp+ASbE85qY4=";
+        private static string topicName = "mytopic";
+        private static string subscriptionName = "mysubscription";
+        private static ServiceBusClient client;
+        private static ServiceBusProcessor processor;
+        private static ConcurrentQueue<MessageDto> receivedMessages = new ConcurrentQueue<MessageDto>();
+
+        static ServiceBusController()
+        {
+            client = new ServiceBusClient(connectionString);
+
+            var processorOptions = new ServiceBusProcessorOptions
+            {
+                AutoCompleteMessages = true
+            };
+
+            processor = client.CreateProcessor(topicName, subscriptionName, processorOptions);
+            processor.ProcessMessageAsync += MessageHandler;
+            processor.ProcessErrorAsync += ErrorHandler; // Add error handler
+        }
+
+        public static async Task StartMessageProcessing()
+        {
+            await processor.StartProcessingAsync();
+        }
+
+        [HttpGet("receive")]
+        public ActionResult<IEnumerable<MessageDto>> ReceiveMessages(string? priority = null)
+        {
+            if (string.IsNullOrEmpty(priority))
+            {
+                return receivedMessages.ToList();
+            }
+            else
+            {
+                return receivedMessages.Where(m => m.Priority == priority).ToList();
+            }
+        }
+
+        static async Task MessageHandler(ProcessMessageEventArgs args)
+        {
+            string body = args.Message.Body.ToString();
+            string priority = args.Message.ApplicationProperties["priority"]?.ToString() ?? "normal";
+            Console.WriteLine($"Received message: {body}, Priority: {priority}");
+
+            receivedMessages.Enqueue(new MessageDto { Body = body, Priority = priority });
+
+            await Task.CompletedTask;
+        }
+
+        static async Task ErrorHandler(ProcessErrorEventArgs args)
+        {
+            Console.WriteLine($"Error source: {args.ErrorSource}");
+            Console.WriteLine($"Fully qualified namespace: {args.FullyQualifiedNamespace}");
+            Console.WriteLine($"Entity path: {args.EntityPath}");
+            Console.WriteLine($"Exception: {args.Exception.Message}");
+
+            await Task.CompletedTask;
+        }
+    }
+}
+```
+
 ## 6. Modify the application middleware(program.cs)
 
+```csharp
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.OpenApi.Models;
+using ServiceBusReceiverApi.Controllers;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllers();
+
+// Add Swagger
+builder.Services.AddSwaggerGen(c =>
+{
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "ServiceBusReceiverApi", Version = "v1" });
+});
+
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+app.UseRouting();
+
+// Enable middleware to serve generated Swagger as a JSON endpoint.
+app.UseSwagger();
+
+// Enable middleware to serve swagger-ui (HTML, JS, CSS, etc.), specifying the Swagger JSON endpoint.
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "ServiceBusReceiverApi v1");
+});
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+// Start message processing
+ServiceBusController.StartMessageProcessing().Wait();
+
+app.Run();
+```
+
 ## 7. Run and Test the application
+
+We execute this command to run the application
+
+```
+dotnet run
+```
