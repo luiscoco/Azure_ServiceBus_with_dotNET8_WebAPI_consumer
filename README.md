@@ -1,5 +1,7 @@
 # How to create a .NET8 WebAPI for receiving messages from Azure ServiceBus
 
+See the source code for this demo in this github repo: https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer
+
 ## 1. Create Azure ServiceBus (Topic and Subscrition)
 
 We first log in to Azure Portal and search for Azure Service Bus 
@@ -70,7 +72,7 @@ Run the following command to create a new Web API project:
 dotnet new webapi -n ServiceBusReceiverApi
 ```
 
-Replace YourProjectName with the desired name for your project. This command creates a new directory with the project name, sets up a basic Web API project structure, and restores any necessary packages
+This command creates a new directory with the project name, sets up a basic Web API project structure, and restores any necessary packages
 
 **Step 3: Open the Project in VSCode**
 
