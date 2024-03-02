@@ -238,3 +238,11 @@ We execute this command to run the application
 ```
 dotnet run
 ```
+
+We receive in the VSCode console the messages from Azure Service Bus
+
+![image](https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer/assets/32194879/59249bd1-8e8f-4308-8d54-48391be75043)
+
+We can also see the messages received in Swagger: http://localhost:5221/swagger/index.html
+
+![image](https://github.com/luiscoco/Azure_ServiceBus_with_dotNET8_WebAPI_consumer/assets/32194879/1f5606a8-5cef-401b-8de5-2be07e2926b7)
